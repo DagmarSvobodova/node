@@ -47,7 +47,7 @@ function save(req, res) {
         content: req.body.content,
         imageUrl: req.body.image_url,
         categoryId: req.body.category_id,
-        userId: 1 //token in future
+        userId: req.userData.userId
     }
 
     const schema = {
@@ -78,26 +78,37 @@ function save(req, res) {
         })
     }
 
-    models.Post.create(post).then(
-        result => {
-            res.status(201).json({
-                message: 'Post created succesfully',
-                post: result
-            })
-        }
-    ).catch(error => {
-        res.status(500).json({
-            message: 'Error bro',
-            error: error
-        });
+    models.Category.findByPk(req.body.category_id).then(result => {
+        if (result !== null) {
+            models.Post.create(post).then(
+                result => {
+                    res.status(201).json({
+                        message: 'Post created succesfully',
+                        post: result
+                    })
+                }
+            ).catch(error => {
+                res.status(500).json({
+                    message: 'Error bro',
+                    error: error
+                });
 
-    });
+            });
+        } else {
+            res.status(400).json({
+                message: 'Error bro',
+
+            });
+        }
+    })
+
+
 }
 
 function update(req, res) {
 
     const id = req.params.id;
-    const userId = 1;
+    const userId = req.userData.userId;
     const updatedPost = {
         title: req.body.title,
         content: req.body.content,
@@ -131,27 +142,36 @@ function update(req, res) {
             error: validationResponse
         })
     }
+    models.Category.findByPk(req.body.category_id).then(result => {
+        if (result !== null) {
+            models.Post.update(updatedPost, { where: { id: id, userId: userId } }).then(
+                result => {
+                    res.status(200).json({
+                        message: 'Post updated succesfully',
+                        post: updatedPost
+                    })
+                }
+            ).catch(error => {
+                res.status(500).json({
+                    message: 'Error bro',
+                    error: error
+                })
 
+            });
+        } else {
+            res.status(400).json({
+                message: 'Error bro',
 
-    models.Post.update(updatedPost, { where: { id: id, userId: userId } }).then(
-        result => {
-            res.status(200).json({
-                message: 'Post updated succesfully',
-                post: updatedPost
-            })
+            });
         }
-    ).catch(error => {
-        res.status(500).json({
-            message: 'Error bro',
-            error: error
-        })
+    })
 
-    });
+
 }
 
 function destroy(req, res) {
     const id = req.params.id;
-    const userId = 1;
+    const userId = req.userData.userId;
 
     models.Post.destroy({ where: { id: id, userId: userId } }).then(
         result => {
